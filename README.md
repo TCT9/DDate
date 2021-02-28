@@ -13,5 +13,6 @@ var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
 console.log(data1.toLocaleDateString('de-DE', options));
 // ==> Freitag, 28. Januar 1972
 ```
+Agora o mesmo exemplo usando o objeto ```locales``` de DDates:
 
-Manipulação de datas com o objeto nativo Date do Javascript
+![print intelissense](printIntellisense_locales.png)
