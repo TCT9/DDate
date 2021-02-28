@@ -1,251 +1,283 @@
-// Configuração
-const config_Gregorian_Calendar = {
-    start_year: 1900,
-    start_day: 1,           
-    start_month: 1,
 
-    // A data 01/January/1900 caiu em uma segunda-feira
-    day_of_the_week: 2,     // 1: Sunday, 2: Monday, 3: Tuesday, 4: Wednesday, 5: Thursday,
-                            // 6: Friday, 7: Saturday
-}
+const TimeFactors = require('./index').TimeFactors;
 
-// Constantes para cálculo do número de anos bissextos até o ano 
-// inicial (config_Gregorian_Calendar.start_year)
-const DIVISION_BY_4_TRUNCATED = Math.trunc(config_Gregorian_Calendar.start_year/4);
-const DIVISION_BY_100_TRUNCATED = Math.trunc(config_Gregorian_Calendar.start_year/100);
-const DIVISION_BY_400_TRUNCATED = Math.trunc(config_Gregorian_Calendar.start_year/400);
+const addPropValue = require('./index').addPropValue;
+const locales = require('./index').locales;
+const locales2 = require('./index').locales2;
 
-// Constante usada nos cálculos de quantidade de anos bissextos em um período
-const BISEXT_YEARS_TO_EARLY_YEAR = DIVISION_BY_4_TRUNCATED - DIVISION_BY_100_TRUNCATED + DIVISION_BY_400_TRUNCATED;
+const optionsDate = require('./index').optionsDate;
+const optionsStyle = require('./index').optionsStyle;
+const optionsTimeZone = require('./index').optionsTimeZone;
+const optionsMatcher = require('./index').optionsMatcher;
+const optionsHour = require('./index').optionsHour;
+const optionEra = require('./index').optionEra;
+const optionNumberingSystem = require('./index').optionNumberingSystem;
+const optionCalendar = require('./index').optionCalendar;
+const optionHourCycle = require('./index').optionHourCycle;
 
-// Vetor com os dias de cada mês. Janeiro é índice zero.
-const VECTOR_DAYS_PER_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-const VECTOR_DAYS_PER_MONTH_BISSEXTILE = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const LEAP_YEARS_UNTIL_1970 = Math.trunc(1970/4) - Math.trunc(1970/100) + Math.trunc(1970/400);
 
-// Vetor com os dias acumulados de cada mês. Janeiro é índice zero.
-const ACCUMULATED_VECTOR_DAYS_PER_MONTH = [31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365];
-const ACCUMULATED_VECTOR_DAYS_PER_MONTH_BISSEXTILE = [31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366];
-
-
-// Retorna a quantidade de anos bissextos até este ano
-function getBissext_Years_Until_This_Year(year) {
-
-    let div_4_trunc = Math.trunc(year/4);
-    let div_100_trunc = Math.trunc(year/100);
-    let div_400_trunc = Math.trunc(year/400);
-
-    return (div_4_trunc - div_100_trunc + div_400_trunc) - BISEXT_YEARS_TO_EARLY_YEAR;
-}
-
-// Retorna a quantidade de dias, desde de 'config_Gregorian_Calendar.start_year' até 'year'
-function getNumber_Of_Days_Since_Start_Year(year) {
-
-    let years_diff = year - config_Gregorian_Calendar.start_year;
-
-    if (years_diff > 0){
-
-        let bissextile_year = getBissext_Years_Until_This_Year(year);
-        
-        //365*(years_diff - bissextile_year) + 366*bissextile_year
-        //365*years_diff - 365*bissextile_year + 366*bissextile_year
-        //365*years_diff + bissextile_year
-        return 365*years_diff + bissextile_year;
-    }
-    return 0;
-}
-
-
-// Retorna um vetor com o total de  dias de cada mês
-function getVector_Days_Per_Month(year) {
-
-    if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
-        return VECTOR_DAYS_PER_MONTH_BISSEXTILE;
-    }
-
-    return VECTOR_DAYS_PER_MONTH;
-}
-
-// Retorna um vetor com acumulado de dias por mês.
-// Exemplo: até janeiro tem 31 dias. Até fevereiro 59 dias (se ano não for bissexto)
-function getAccumulated_Vector_Days_Per_Month(year) {
-
-    if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
-        return ACCUMULATED_VECTOR_DAYS_PER_MONTH_BISSEXTILE;
-    }
-
-    return ACCUMULATED_VECTOR_DAYS_PER_MONTH;
-}
-
-function getDays_in_Month(year, month){
+function strategy_func_Month(objDayMonthYear){
     
-    if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
-        return VECTOR_DAYS_PER_MONTH_BISSEXTILE[month-1];
-    }
-
-    return VECTOR_DAYS_PER_MONTH[month-1];
+    return {
+        strategy_time: objDayMonthYear.month,
+        strategy_function: "setMonth",
+        objDayMonthYear: objDayMonthYear,
+    };
 }
 
-function getAccumulated_Days_in_Month(year, month){
+function strategy_func_Year(objDayMonthYear){
     
-    if (month < 1) {
-        return 0;
-    }
-
-    if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
-        return ACCUMULATED_VECTOR_DAYS_PER_MONTH_BISSEXTILE[month-1];
-    }
-
-    return ACCUMULATED_VECTOR_DAYS_PER_MONTH[month-1];
+    return {
+        strategy_time: objDayMonthYear.year,
+        strategy_function: "setYear",
+        objDayMonthYear: objDayMonthYear,
+    };
 }
 
-function getNumber_Of_Days_since_January_1(day, month, year){
 
-    // Contagem de dias de 01/jan até day/
-    let days_since = getAccumulated_Days_in_Month(year, month-1);
-    days_since += day;
+function add_range_base(interval_is_of_type, strategy_func) {
 
-    return days_since;
-}
+    //Exemple, interval_is_of_type = 2.73 months
 
-//Teste se number_value é do tipo numérico
-function isNumber(number_value) {
+    let value_frac = interval_is_of_type % 1;           // 0.73 months
+    let value_trunc = Math.trunc(interval_is_of_type);  // 2 months
+
+    //this.get_Year_Month_Day(this): retona um objeto {day, month, year}
+    //objStrategy: retorna um objeto {strategy_time, strategy_function, objDayMonthYear}
+    //objDayMonthYear é  {day, month, year}
+    let objStrategy = strategy_func(this.get_Year_Month_Day(this));
+
+    let {day: tDay, year:tYear, month: tMonth} = objStrategy.objDayMonthYear;
+
+    // let date = new Date(`${tMonth+1}/${tDay}/${tYear}`);     // add 2 months
+    let date = new Date(this.getTime());     // add 2 months
+    // date.setHours(0);
+    // date.setYear(tYear); date.setMonth(tMonth); date.setDate(tDay);
     
-    let has_error = !(typeof number_value === 'number') || !isFinite(number_value);
 
-    if (has_error === false){
-        has_error = isNaN(number_value);
+    // tMonth += month_trunc;  //value_trunc
+    objStrategy.strategy_time += value_trunc;
+    if (value_trunc != 0){
+        // date.setMonth(tMonth);
+        date[objStrategy.strategy_function](objStrategy.strategy_time);
     }
 
-    return !has_error;
-}
+    tDay = date.getDate();
+    tMonth = date.getMonth()+1;
+    tYear = date.getFullYear();    
 
-function test_param_year_is_error(year){
 
-    if (isNumber(year) == false){
-        return {isError: true, message: `O valor para 'year' ${year} não é um número`, idError: 1};
-    }
-    
-    if (year < config_Gregorian_Calendar.start_year) {
-        return {isError: true, message: `O ano ${year} é menor do que ${config_Gregorian_Calendar.start_year}`, idError: 2};
-    }
+    // if (month_frac != 0){       // 0.73 != 0 ? true
+    if (value_frac != 0){       // 0.73 != 0 ? true
 
-    return {isError: false, message: "done", idError: 0};
-}
+        let objStrategy2 = strategy_func(this.get_Year_Month_Day(date));
 
-function test_params_day_month_is_error(day, month, year){
+        let {day, year, month} = objStrategy2.objDayMonthYear;
 
-    if (isNumber(day) == false){
-        return {isError: true, message: `O valor para 'day' ${day} não é um número`, idError: 3};
-    }
+        // let nextDate = new Date(`${month+1}/${day}/${year}`);     // add 2 months
+        let nextDate = new Date(date.getTime());     // add 2 months
 
-    if (isNumber(month) == false){
-        return {isError: true, message: `O valor para 'month' ${month} não é um número`, idError: 4};
-    }
+        nextDate[objStrategy2.strategy_function]( objStrategy2.strategy_time + 1*Math.sign(value_frac) );
 
-    if (day < 1 && day > 31){
-        return {isError: true, message: `O intervalo de 'day' é entre 1 e 31. O valor ${day} não é permitido`, idError: 5};
-    }
+        let diff_getTime = Math.abs(nextDate.getTime() - date.getTime()); // difference in getTime
+        let diff_days = diff_getTime/TimeFactors.days;            // difference in days
 
-    if (month < 1 && month > 12){
-        return {isError: true, message: `O intervalo de 'month' é entre 1 e 12. O valor ${month} não é permitido`, idError: 6};
-    }
+        let new_day = diff_days * value_frac       // diff_days * 0.73 months
 
-    if (day >  getDays_in_Month(year, month)) {
-        return {isError: true, message: `O mês '${month}' não possui o dia '${day}'. 'day' não permitido.`, idError: 7};
-    }
+        let day_frac = new_day % 1;                 //the whole part is day. The fractional part is time
+        let day_trunc = Math.trunc(new_day);
 
-    return {isError: false, message: "Done!", idError: 0};
+        if (day_trunc > 0){
+            tDay += day_trunc;
+            date.setDate(tDay - 1);
 
-}
+            tDay = date.getDate();
+            tMonth = date.getMonth()+1;
+            tYear = date.getFullYear();    
 
-class DDate {
+        }else if (day_frac < 0){
+            date.setDate(tDay + day_trunc);
 
-    #time = 0; 
-    #day = 0; #month = 0; #year = 0; 
-    #isError; #message; #idError
+            tDay = date.getDate();
+            tMonth = date.getMonth()+1;
+            tYear = date.getFullYear();    
 
-    constructor(month_or_day, day_or_month, year, is_it_month_day_and_year = true) {
-        
-        let _month; let _day; let _year;
-
-        if (is_it_month_day_and_year) {
-            _month = month_or_day;
-            _day = day_or_month;
         }else{
-            _month = day_or_month;
-            _day = month_or_day;
-
+            tDay = date.getDate();
+            tMonth = date.getMonth()+1;
+            tYear = date.getFullYear();    
         }
         
-        _year = year;
-        {
-            let {isError, message, idError} = test_param_year_is_error(_year);
-            if (isError) {
-                return {isError: true, message: message, idError: idError};
-            }
+        
+        // let theDate1 = new Date(`${tMonth}/${tDay}/${tYear}`);
+
+        if (day_frac != 0){
+
+            let hours = 24*day_frac;
+            let hour_int = Math.trunc(hours);
+            let hour_frac = hours % 1;
+            
+            let minutes = hour_frac * 60;
+            let minute_int = Math.trunc(minutes);
+            let minute_frac = minutes % 1;
+
+            let seconds = minute_frac * 60;
+            let second_int = Math.trunc(seconds);
+            let second_frac = seconds % 1;
+
+            let millisecond_int = second_frac * 1000;
+
+            // let theDate2 = new Date(`${tMonth}/${tDay}/${tYear}`);
+            let theDate2 = new Date(date.getTime());
+
+            theDate2.setHours(hour_int + date.getHours());
+            theDate2.setMinutes(minute_int + date.getMinutes());
+            theDate2.setSeconds(second_int + date.getSeconds());
+            theDate2.setMilliseconds(millisecond_int + + date.getMilliseconds());
+        
+            return  new DDate(theDate2.getTime());
         }
 
-        {
-            let {isError, message, idError} = test_params_day_month_is_error(_day, _month);
-            if (isError) {
-                return {isError: true, message: message,  idError: idError};
-            }
-        }
+        return new DDate(theDate1.getTime());
 
-        let time = getNumber_Of_Days_Since_Start_Year(_year) + 
-            getNumber_Of_Days_since_January_1(_day, _month, _year);
-
-        this.#year = _year;
-        this.#month = _month;
-        this.#day = _day;
-        this.#time = time;
-        this.#isError = false;
-        this.#message = "Done!";  
-        this.#idError = 0;
-
-        //Object.freeze(this);
     }
 
-    getNativeDate(){
-        return new Date(`${this.#month}/${this.#day}/${this.#year}`);
+    return new DDate(date.getTime());
+    
+}
+
+
+class DDate extends Date {
+    
+    constructor(value){
+        super(value);
     }
 
-    getTime(){
-        return this.#time;
+    getLeap_Years_from_1970_this_date(date) {
+
+        let year = date.getFullYear();
+
+        let until_1970 = LEAP_YEARS_UNTIL_1970;
+        let until_year = Math.trunc(year/4) - Math.trunc(year/100) + Math.trunc(year/400);
+        let leap_years = until_year - until_1970;
+
+        return leap_years;
     }
 
-    getDay(){
-        return this.#day;
-    }
+    //Retorna o month+1 e day+1
+    get_Year_Month_Day(date) {
 
-    getMonth(){
-        return this.#month;
-    }
-
-    getYear(){
-        return this.#year;
-    }
-
-    getIsError(){
-        return this.#isError;
-    }
-
-    getObjectError(){
         return {
-            isError: this.#isError,
-            message: this.#message, 
-            idError: this.#idError,
-            error: new Error(this.#message),
-        } 
+            year: date.getFullYear(),
+            month: date.getMonth(),
+            day: date.getDate(),
+        };
+    }
+    
+
+
+    add_Range(interval_is_of_type){
+
+        return {
+            milliseconds: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type);
+                return date;
+            },
+
+            seconds: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type*TimeFactors.seconds);
+                return date;
+            },
+
+            minutes: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type*TimeFactors.minutes);
+                return date;
+            },
+
+            hours: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type*TimeFactors.hours);
+                return date;
+            },
+
+            days: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type*TimeFactors.days);
+                return date;
+            },
+
+            months: () => add_range_base.call(this, interval_is_of_type, strategy_func_Month),
+            
+            years: () => add_range_base.call(this, 12*interval_is_of_type, strategy_func_Month),
+            // years: () => add_range_base.call(this, interval_is_of_type, strategy_func_Year),
+            
+        };
+    }
+
+    setLocaleString(locale){
+        this.locale = locale;
+    }
+
+    setOptions_LocaleString(objOptions){
+        this.objOptions = objOptions;
+    }
+
+    toString(){
+        let strDate = this.toLocaleDateString(this.locale, this.objOptions);
+        return strDate;
+    }
+
+    clone_locales_and_options(objDDate){
+        this.locale = objDDate.locale;
+        this.objOptions = objDDate.objOptions
+    }
+
+    diff_dates(date1, date2){
+
     }
 
 }
 
-let temp1 = new DDate(1, 28, 1972);
 
-console.log (`Index: ${temp1.index}`);
 
-temp1.index = 0;
-console.log (`Index: ${temp1.index}`);
+let dataInicial = new DDate("01/31/1972 00:00:00");
 
-console.log (`Index: ${temp1.getIndex()}`);
+dataInicial.setLocaleString(locales['pt-BR']);
+
+let options = {};
+addPropValue(options, optionsDate.enum_day.digit);
+addPropValue(options, optionsDate.enum_month.digit);
+addPropValue(options, optionsDate.enum_year.digit);
+
+addPropValue(options, optionsDate.enum_hour.digit);
+addPropValue(options, optionsDate.enum_minute.digit);
+addPropValue(options, optionsDate.enum_second.digit);
+
+dataInicial.setOptions_LocaleString(options);
+
+console.log(`Data inicial: \t\t\t${dataInicial}\n`);
+
+
+
+let time  = 32.76;  // time 32.76 mêses
+console.log(`Time em meses: ${time}`);
+let dataAdicaoMes = dataInicial.add_Range(time).months();               // adiciona um range(intervalo) ao objeto 'dataInicial'. Retorna um DDate.
+dataAdicaoMes.clone_locales_and_options(dataInicial);                   // clona locale e objOptions do objeto 'dataInicial'
+console.log(`Data final, após ${time} meses: \t${dataAdicaoMes}\n`);    // Adiciona 32.76 meses ao objeto 'dataInicial'
+
+time  = -time;  // time é -32.76 meses
+console.log(`Time em meses: ${time}`);
+let dataSubtracaoMes = dataAdicaoMes.add_Range(time).months();          // subtrai, pois o mês é negativo, um range(intervalo) ao objeto 'dataInicial'. Retorna um DDate.
+dataSubtracaoMes.clone_locales_and_options(dataInicial);                //clona locale e objOptions do objeto 'dataInicial'
+console.log(`Data final, após ${time} meses: \t${dataSubtracaoMes}\n`);
+
+time = 2.73;    // time é 2.73 anos
+console.log(`Time em anos: ${time}`);
+let dataAdicaoAno = dataInicial.add_Range(time).years();            // adiciona um range(intervalo) ao objeto 'dataInicial'. Retorna um DDate.
+dataAdicaoAno.clone_locales_and_options(dataInicial);               // clona locale e objOptions do objeto 'dataInicial'
+console.log(`Data final, após ${time} anos: \t${dataAdicaoAno}\n`);
+
+time  = -time;  // time é -2.73 anos
+console.log(`Time em anos: ${time}`);
+let dataSubtracaoAno = dataAdicaoAno.add_Range(time).years();       // subtrai, pois o mês é negativo, um range(intervalo) ao objeto 'dataInicial'. Retorna um DDate.
+dataSubtracaoAno.clone_locales_and_options(dataInicial);            // clona locale e objOptions do objeto 'dataInicial'
+console.log(`Data final, após ${time} anos: \t${dataSubtracaoAno}\n`);
