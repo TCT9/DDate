@@ -16,3 +16,5 @@ console.log(data1.toLocaleDateString('de-DE', options));
 Agora o mesmo exemplo usando o objeto ```locales``` de DDates:
 
 ![print intelissense](printIntellisense_locales.png)
+
+A notação ```[""]``` permite uma busca apenas nas propriedades deste objeto. Ao digitar 'd' uma lista das propriedades que o contém são exibidas.  
