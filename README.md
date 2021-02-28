@@ -4,6 +4,14 @@ Devido a falta tipagem estática do Javascript, a consulta dos parâmetros de fu
 
 ![printLocaleDateString](printLocaleDateString.png)
 
+E quantidade de opções de configuração é grande! O objeto ```options``` necessita de pares de chave (o nome da propriedade que se desja alterar) e valor (uma string padronizada). Exemplo:
 
+```javascript
+let data1 = new Date("01/28/1972");
+
+var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+console.log(data1.toLocaleDateString('de-DE', options));
+// ==> Freitag, 28. Januar 1972
+```
 
 Manipulação de datas com o objeto nativo Date do Javascript
