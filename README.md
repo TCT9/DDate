@@ -17,6 +17,8 @@ Agora o mesmo exemplo usando o objeto ```locales``` de DDates:
 
 ![print intelissense](printIntellisense_locales.png)
 
-A notação ```[""]``` permite uma busca apenas nas propriedades deste objeto. Ao digitar 'd' uma lista das propriedades que o contém são exibidas, conforme demonstrado abaixo.
+A notação ```[""]``` permite uma busca apenas nas propriedades deste objeto. Ao digitar 'd' uma lista das propriedades que o contém são exibidas, conforme demonstrado acima.
+
+O próximo exemplo adiciona propriedades e valores ao objeto ```options```, usando o objeto ```optionsDate``` de DDate. 
 
 ![git intellisense options](gif_options1.gif)
