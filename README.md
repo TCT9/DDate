@@ -19,4 +19,4 @@ Agora o mesmo exemplo usando o objeto ```locales``` de DDates:
 
 A notação ```[""]``` permite uma busca apenas nas propriedades deste objeto. Ao digitar 'd' uma lista das propriedades que o contém são exibidas, conforme demonstrado abaixo.
 
-![git intellisense options](gif_intellisense_options.gif)
+![git intellisense options]
