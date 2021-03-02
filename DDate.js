@@ -17,21 +17,19 @@ const optionHourCycle = require('./index').optionHourCycle;
 
 const LEAP_YEARS_UNTIL_1970 = Math.trunc(1970/4) - Math.trunc(1970/100) + Math.trunc(1970/400);
 
-function strategy_func_Month(objDayMonthYear){
+function strategy_func_Month(objDate){
     
     return {
-        strategy_time: objDayMonthYear.month,
+        strategy_time: objDate.getMonth(),
         strategy_function: "setMonth",
-        objDayMonthYear: objDayMonthYear,
     };
 }
 
-function strategy_func_Year(objDayMonthYear){
+function strategy_func_Year(objDate){
     
     return {
-        strategy_time: objDayMonthYear.year,
+        strategy_time: objDate.getFullYear(),
         strategy_function: "setYear",
-        objDayMonthYear: objDayMonthYear,
     };
 }
 
@@ -45,37 +43,23 @@ function add_range_base(interval_is_of_type, strategy_func) {
 
     //this.get_Year_Month_Day(this): retona um objeto {day, month, year}
     //objStrategy: retorna um objeto {strategy_time, strategy_function, objDayMonthYear}
-    //objDayMonthYear é  {day, month, year}
-    let objStrategy = strategy_func(this.get_Year_Month_Day(this));
+    let objStrategy = strategy_func(this);
 
-    let {day: tDay, year:tYear, month: tMonth} = objStrategy.objDayMonthYear;
-
-    // let date = new Date(`${tMonth+1}/${tDay}/${tYear}`);     // add 2 months
     let date = new Date(this.getTime());     // add 2 months
-    // date.setHours(0);
-    // date.setYear(tYear); date.setMonth(tMonth); date.setDate(tDay);
     
-
-    // tMonth += month_trunc;  //value_trunc
     objStrategy.strategy_time += value_trunc;
     if (value_trunc != 0){
-        // date.setMonth(tMonth);
         date[objStrategy.strategy_function](objStrategy.strategy_time);
     }
 
-    tDay = date.getDate();
-    tMonth = date.getMonth()+1;
-    tYear = date.getFullYear();    
+    let tDay = date.getDate();
+    let tMonth = date.getMonth()+1;
+    let tYear = date.getFullYear();    
 
-
-    // if (month_frac != 0){       // 0.73 != 0 ? true
     if (value_frac != 0){       // 0.73 != 0 ? true
 
-        let objStrategy2 = strategy_func(this.get_Year_Month_Day(date));
+        let objStrategy2 = strategy_func(date);
 
-        let {day, year, month} = objStrategy2.objDayMonthYear;
-
-        // let nextDate = new Date(`${month+1}/${day}/${year}`);     // add 2 months
         let nextDate = new Date(date.getTime());     // add 2 months
 
         nextDate[objStrategy2.strategy_function]( objStrategy2.strategy_time + 1*Math.sign(value_frac) );
@@ -92,25 +76,13 @@ function add_range_base(interval_is_of_type, strategy_func) {
             tDay += day_trunc;
             date.setDate(tDay - 1);
 
-            tDay = date.getDate();
-            tMonth = date.getMonth()+1;
-            tYear = date.getFullYear();    
-
         }else if (day_frac < 0){
             date.setDate(tDay + day_trunc);
-
-            tDay = date.getDate();
-            tMonth = date.getMonth()+1;
-            tYear = date.getFullYear();    
-
-        }else{
-            tDay = date.getDate();
-            tMonth = date.getMonth()+1;
-            tYear = date.getFullYear();    
         }
-        
-        
-        // let theDate1 = new Date(`${tMonth}/${tDay}/${tYear}`);
+
+        tDay = date.getDate();
+        tMonth = date.getMonth()+1;
+        tYear = date.getFullYear();    
 
         if (day_frac != 0){
 
@@ -128,7 +100,6 @@ function add_range_base(interval_is_of_type, strategy_func) {
 
             let millisecond_int = second_frac * 1000;
 
-            // let theDate2 = new Date(`${tMonth}/${tDay}/${tYear}`);
             let theDate2 = new Date(date.getTime());
 
             theDate2.setHours(hour_int + date.getHours());
