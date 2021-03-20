@@ -1133,7 +1133,150 @@ const TimeFactors = {
 
 };
 
+const LEAP_YEARS_UNTIL_1970 = Math.trunc(1970/4) - Math.trunc(1970/100) + Math.trunc(1970/400);
+
+
+function  getLeap_Years_from_1970_this_date(date) {
+
+    let year = date.getFullYear();
+
+    let until_1970 = LEAP_YEARS_UNTIL_1970;
+    let until_year = Math.trunc(year/4) - Math.trunc(year/100) + Math.trunc(year/400);
+    let leap_years = until_year - until_1970;
+
+    return leap_years;
+}
+
+function add_month(_this, interval_is_of_type){
+
+    let newDate = new Date(_this.getTime());
+    let int_month = Math.trunc(interval_is_of_type);
+    
+    newDate.setMonth(_this.getMonth() + int_month );
+
+    return newDate.getTime();
+
+}
+
+
+class DDate extends Date {
+    
+    constructor(value){
+        super(value);
+    }
+
+    static  getLeap_Years_from_1970_this_date(date) {
+
+        let year = date.getFullYear();
+
+        let until_1970 = LEAP_YEARS_UNTIL_1970;
+        let until_year = Math.trunc(year/4) - Math.trunc(year/100) + Math.trunc(year/400);
+        let leap_years = until_year - until_1970;
+
+        return leap_years;
+    }
+
+    add_Range(interval_is_of_type){
+
+        return {
+            milliseconds: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type);
+                return date;
+            },
+
+            seconds: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type*TimeFactors.seconds);
+                return date;
+            },
+
+            minutes: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type*TimeFactors.minutes);
+                return date;
+            },
+
+            hours: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type*TimeFactors.hours);
+                return date;
+            },
+
+            days: () => {
+                let date = new DDate(this.getTime() + interval_is_of_type*TimeFactors.days);
+                return date;
+            },
+
+            months: () => {
+                
+                let time = add_month(this, interval_is_of_type);
+
+                return new DDate(time);
+            },
+            
+            years: () => {
+                
+                let time = add_month(this, 12*interval_is_of_type);
+
+                return new DDate(time);
+                
+            },
+            
+        };
+    }
+
+
+    setLocaleString(locale){
+        this.locale = locale;
+    }
+
+    setOptions_LocaleString(objOptions){
+        this.objOptions = objOptions;
+    }
+
+    toString(){
+        let strDate = this.toLocaleDateString(this.locale, this.objOptions);
+        return strDate;
+    }
+
+    clone_locales_and_options(objDDate){
+        this.locale = objDDate.locale;
+        this.objOptions = objDDate.objOptions
+    }
+
+    static diff_dates(date1, date2){
+
+        let diff_date = Math.abs(date1.getTime() - date2.getTime());
+        
+        return {
+
+            milliseconds: () => diff_date,
+        
+            seconds: () => TimeFactors.seconds*diff_date,
+
+            minutes: () => TimeFactors.minutes*diff_date,
+
+            hours: () => TimeFactors.hours*diff_date,
+
+            days: () => TimeFactors.days*diff_date,
+
+            months: () => {
+
+                let months1 = data_in_months(date1); 
+                let months2 = data_in_months(date2); 
+                
+                return Math.abs(months1 - months2) - 1;
+            },
+            
+            years: () => Math.abs(date1.getFullYear() - date2.getFullYear()),
+
+        };
+
+    }
+
+}
+
+
 module.exports = {
+
+    DDate: DDate,
 
     TimeFactors: TimeFactors, 
 
