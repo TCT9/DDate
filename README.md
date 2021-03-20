@@ -23,4 +23,4 @@ O próximo exemplo adiciona propriedades e valores ao objeto ```options```, usan
 
 ![git intellisense options](gif_options1.gif)
 
-O arquivo [exemple.js]|(exemple.js) tem vários exemplos de como usar este módulo.
+O arquivo [exemple.js](exemple.js) tem vários exemplos de como usar este módulo.
