@@ -22,3 +22,5 @@ A notação ```[""]``` permite uma busca apenas nas propriedades deste objeto. A
 O próximo exemplo adiciona propriedades e valores ao objeto ```options```, usando o objeto ```optionsDate``` de DDate. 
 
 ![git intellisense options](gif_options1.gif)
+
+O arquivo [exemple.js]|(exemple.js) tem vários exemplos de como usar este módulo.
